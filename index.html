@@ -399,7 +399,7 @@
     function createOptionElement(site) {
       const option = document.createElement("option");
       option.value = site.url;
-      option.innerHTML = site.name || site.url;
+      option.innerHTML = site.name || site.desc || site.url;
       return option;
     }
 
