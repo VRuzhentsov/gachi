@@ -227,15 +227,17 @@
     integrity="sha384-QJHtvGhmr9XOIpI6YVutG+2QOK9T+ZnN4kzFN1RtK3zEFEIsxhlmWl5/YESvpZ13"
     crossorigin="anonymous"
   ></script>
-  <script>
+  <script type="module">
     // Utils
+    import { debounce } from './utils/debounce.js';
+
     const sortBy = (key) => {
       return (a, b) => (a[key] > b[key]) ? 1 : ((b[key] > a[key]) ? -1 : 0);
     };
+    const CLICK_COUNT_KEY = 'click_count';
 
     // Store
     function createStore() {
-      const CLICK_COUNT_KEY = 'click_count';
       let sitesList = [];
 
       const getClickCount = () => {
@@ -263,14 +265,15 @@
           const clickCount = getClickCount();
           setClickCount(clickCount + 1);
         },
+        resetCount: () => {
+          localStorage.setItem(CLICK_COUNT_KEY, 0)
+        }
       }
     }
     const store = createStore();
 
     // Fetching methods
     function fetchSite(siteUrl) {
-      store.increateCount();
-      setCounting(store.getClickCount());
       try {
         // fetch(siteUrl);
         fetch("https://well-cum-putin.com/api/cum", {
@@ -278,7 +281,7 @@
           headers: {
             "Content-Type": "application/json"
           },
-          body: JSON.stringify({ url: siteUrl })
+          body: JSON.stringify({ url: siteUrl, count: store.getClickCount() })
         });
       } catch (error) {
         console.debug('Wasnt able to fetch:', error);
@@ -320,7 +323,10 @@
           console.log('site not selected');
           return;
         }
-        fetchSite(siteUrl);
+        store.increateCount();
+        setCounting(store.getClickCount());
+
+        debounce(() => fetchSite(siteUrl), 2000);
       });
 
       btn.addEventListener('mousedown', () => {
@@ -361,6 +367,14 @@
         toggleableImage.classList.add('hidden');
       }
     }
+    function addSelectSiteListener () {
+      const el = document.querySelector('.site--select');
+
+      el.addEventListener('click', () => {
+        console.log('reset counter');
+        store.resetCount();
+      })
+    }
 
     function listenImageHover() {
       const btn = document.querySelector('.main-content--wrapper');
@@ -391,6 +405,7 @@
 
     document.addEventListener("DOMContentLoaded", async () => {
       addFireListener();
+      addSelectSiteListener();
       setCounting(store.getClickCount());
       listenImageHover();
       await fetchSitesList()
